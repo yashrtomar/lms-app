@@ -2,11 +2,12 @@ import {Schema, model} from 'mongoose';
 
 const courseSchema = new Schema(
   {
-    instructorId: {
+    userId: {
       type: Schema.Types.ObjectId,
       ref: 'Instructor',
       required: true,
     },
+    courseCategory: {type: String, required: true},
     courseTitle: {type: String, required: true},
     courseDescription: {type: String, required: true},
     courseCategory: {

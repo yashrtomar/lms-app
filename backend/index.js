@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import {connectDb} from './utils/db.js';
+import {errorHandler} from './middleware/errorHandler.js';
 // import cors from 'cors'; //for web
 
 dotenv.config();
