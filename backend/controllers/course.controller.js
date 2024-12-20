@@ -1,17 +1,9 @@
 import {Course} from '../models/course.model';
-import {User} from '../models/user.model';
 
 export const createCourse = async (request, response) => {
   try {
     const {courseCategory, courseTitle, courseDescription} = request.body;
-    const userId = request.id;
-
-    if (!userId) {
-      return response.status(400).json({
-        message: 'User unauthorized!',
-        success: false,
-      });
-    }
+    const user = request.user;
 
     if (!courseTitle || !courseDescription || !courseCategory || !userId) {
       const message = !courseTitle
@@ -28,24 +20,15 @@ export const createCourse = async (request, response) => {
       });
     }
 
-    const user = await User.findOne(userId);
-    if (!user) {
-      return response.status(400).json({
-        message: 'User not found!',
-        success: false,
-      });
-    }
-
     if (user.role !== 'instructor') {
-      return response.status(400).json({
-        message:
-          'FORBIDDEN: You are not acuthorized to create a course, only an Instructor is authorized to do so!',
+      return response.status(403).json({
+        message: 'Only instructors can create courses!',
         success: false,
       });
     }
 
     const course = await Course.create({
-      userId,
+      userId: user._id,
       courseTitle,
       courseDescription,
       courseCategory,
@@ -67,16 +50,9 @@ export const createCourse = async (request, response) => {
 
 export const getCoursesOfInstructor = async (request, response) => {
   try {
-    const userId = request.id;
+    const user = request.user;
 
-    if (!userId) {
-      return response.status(400).json({
-        message: 'User unauthorized!',
-        success: false,
-      });
-    }
-
-    const courses = await Course.find({userId});
+    const courses = await Course.findOne({userId: user._id});
     if (!courses) {
       response.status(404).json({
         message: 'No courses found!',
@@ -125,7 +101,7 @@ export const getAllCourses = (request, response) => {
 
 export const updateCourse = async (request, response) => {
   try {
-    const userId = request.id;
+    const user = request.user;
     const courseId = request.params.courseId;
     const {
       courseTitle,
@@ -136,33 +112,21 @@ export const updateCourse = async (request, response) => {
     } = request.body;
     const thumbnail = request.file;
 
-    if (!userId || !courseId) {
-      const message = !userId
-        ? 'User unauthorized!'
-        : 'Course Id is requuired in the request!';
+    if (!courseId) {
       return response.status(400).json({
-        message,
-        success: false,
-      });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return response.status(400).json({
-        message: 'User not found!',
+        message: 'Course Id is requuired in the request!',
         success: false,
       });
     }
 
     if (user.role !== 'instructor') {
-      return response.status(400).json({
-        message:
-          'FORBIDDEN: You are not acuthorized to create a course, only an Instructor is authorized to do so!',
+      return response.status(403).json({
+        message: 'Only instructors can update courses!',
         success: false,
       });
     }
 
-    const course = Course.findOne({userId, _id: courseId});
+    const course = await Course.findOne({userId: user._id, _id: courseId});
     if (!course) {
       return response.status(404).json({
         message: 'Course not found!',
@@ -180,12 +144,12 @@ export const updateCourse = async (request, response) => {
     const thumbnailUrl = cloudResponse.secure_url;
 
     const updatedData = {
-      courseTitle,
-      courseDescription,
-      courseCategory,
-      coursePrice,
-      status,
-      thumbnailUrl: thumbnailUrl,
+      ...(courseTitle && {courseTitle}),
+      ...(courseDescription && {courseDescription}),
+      ...(courseCategory && {courseCategory}),
+      ...(coursePrice && {coursePrice}),
+      ...(status && {status}),
+      ...(thumbnailUrl && {thumbnailUrl: thumbnailUrl}),
     };
     const updatedCourse = await Course.findByIdAndUpdate(
       courseId,
@@ -211,51 +175,33 @@ export const updateCourse = async (request, response) => {
 
 export const deleteCourse = async (request, response) => {
   try {
-    const userId = request.id;
+    const user = request.user;
     const courseId = request.params.id;
 
-    if (!userId || !courseId) {
-      const message = !userId
-        ? 'User unauthorized!'
-        : 'Course Id is requuired in the request!';
+    if (!courseId) {
       return response.status(400).json({
-        message,
-        success: false,
-      });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return response.status(400).json({
-        message: 'User not found!',
+        message: 'Course Id is required in the request!',
         success: false,
       });
     }
 
     if (user.role !== 'instructor') {
-      return response.status(400).json({
-        message:
-          'FORBIDDEN: You are not acuthorized to create a course, only an Instructor is authorized to do so!',
+      return response.status(403).json({
+        message: 'Only instructors can delete courses!',
         success: false,
       });
     }
 
-    if (!courseId) {
-      return response.status(400).json({
-        message: 'Course id not found in the request',
-        success: false,
-      });
-    }
-
-    const course = Course.findOne({userId, _id: courseId});
-    if (!course) {
+    const deleteCourse = await Course.findOneAndDelete({
+      userId: user._id,
+      _id: courseId,
+    });
+    if (!deleteCourse) {
       return response.status(404).json({
         message: 'Course not found!',
         success: false,
       });
     }
-
-    await Course.findOneAndDelete({userId, _id: courseId});
 
     return response.status(200).json({
       message: 'Your Course has been deleted!',
