@@ -26,16 +26,18 @@ export const createCourse = async (request, response) => {
 			});
 		}
 
-		const course = await Course.create({
+		const newCourse = await Course.create({
 			userId: user._id,
 			courseTitle,
 			courseDescription,
 			courseCategory
 		});
 
+		user.createdCourses.push(newCourse._id);
+
 		return response.status(200).json({
 			message: 'The Course has been created!',
-			data: course,
+			data: newCourse,
 			success: true
 		});
 	} catch (error) {

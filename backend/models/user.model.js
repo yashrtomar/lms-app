@@ -16,8 +16,9 @@ const userSchema = new Schema(
 			default: 'student'
 		},
 		profilePicture: { type: String, default: '' },
-		coursesEnrolledIn: { type: Schema.Types.ObjectId, ref: 'Course' },
-		coursesCreated: { type: Schema.Types.ObjectId, ref: 'Course' }
+		coursesEnrolledIn: [{ type: Schema.Types.ObjectId, ref: 'Course' }],
+		createdCourses: [{ type: Schema.Types.ObjectId, ref: 'Course' }],
+		savedCourses: [{ type: Schema.Types.ObjectId, ref: 'Course' }]
 	},
 	{ timestamps: true }
 );

@@ -2,6 +2,7 @@ import { User } from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
 import { createSecretToken } from '../utils/createSecretToken.js';
 import { deleteMediaFromCloudinary, uploadMedia } from '../utils/cloudinary.js';
+import { Course } from '../models/course.model.js';
 
 export const signUp = async (request, response) => {
 	try {
@@ -220,6 +221,99 @@ export const updateUser = async (request, response) => {
 		console.log('Error in updating the user:\n', error);
 		return response.status(500).json({
 			message: 'Internal server error.',
+			success: false
+		});
+	}
+};
+
+export const enrollInCourse = async (request, response) => {
+	try {
+		const userId = request.id;
+		const courseId = request.params.courseId;
+
+		const user = await User.findById(userId);
+		const course = await Course.findById(courseId);
+
+		if (!user) {
+			return response.status(404).json({
+				message: 'User not found',
+				success: false
+			});
+		}
+
+		if (!course) {
+			return response.status(404).json({
+				message: 'Course not found',
+				success: false
+			});
+		}
+
+		if (user.coursesEnrolledIn.includes(courseId)) {
+			return response.status(400).json({
+				message: 'User is already enrolled in this course',
+				success: false
+			});
+		}
+
+		user.coursesEnrolledIn.push(courseId);
+
+		await user.save();
+
+		return response.status(200).json({
+			message: 'Successfully enrolled in the course',
+			success: true,
+			data: { user, course }
+		});
+	} catch (error) {
+		console.error('Error enrolling in course:', error);
+		return response.status(500).json({
+			message: 'Internal server error',
+			success: false
+		});
+	}
+};
+
+export const saveCourseForLater = async (request, response) => {
+	try {
+		const userId = request.id;
+		const courseId = request.params.courseId;
+
+		const user = await User.findById(userId);
+		const course = await Course.findById(courseId);
+
+		if (!user) {
+			return response.status(404).json({
+				message: 'User not found',
+				success: false
+			});
+		}
+
+		if (!course) {
+			return response.status(404).json({
+				message: 'Course not found',
+				success: false
+			});
+		}
+
+		if (user.savedCourses.includes(courseId)) {
+			return response.status(400).json({
+				message: 'Course is already saved for later',
+				success: false
+			});
+		}
+
+		user.savedCourses.push(courseId);
+		await user.save();
+
+		return response.status(200).json({
+			message: 'Course saved for later',
+			success: true,
+			data: user.savedCourses
+		});
+	} catch (error) {
+		console.error('Error saving course for later:', error);
+		return response.status(500).json({
+			message: 'Internal server error',
 			success: false
 		});
 	}
