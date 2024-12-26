@@ -4,7 +4,8 @@ import {
 	getCoursesOfInstructor,
 	getAllCourses,
 	updateCourse,
-	deleteCourse
+	deleteCourse,
+	getPublishedCourses
 } from '../controllers/course.controller.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
 import { validateUserRole } from '../middleware/validateUserRole.js';
@@ -21,6 +22,9 @@ router
 router
 	.route('/courses-by-instructor/:id')
 	.get(authenticateToken, validateUserRole, getCoursesOfInstructor);
+
+// Route to get all courses of the with 'published' status
+router.route('/published-courses').get(authenticateToken, getPublishedCourses);
 
 // Route to get all courses (public access)
 router.route('/all-courses').get(getAllCourses);

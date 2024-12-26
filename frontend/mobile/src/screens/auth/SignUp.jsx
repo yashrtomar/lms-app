@@ -15,7 +15,7 @@ import {
 import React, {useState} from 'react';
 import Ionicons from '@react-native-vector-icons/ionicons';
 
-export default function SignUp() {
+export default function SignUp({navigation}) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isFocused, setIsFocused] = useState('');
@@ -27,7 +27,6 @@ export default function SignUp() {
         style={{flex: 1}}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={{flexGrow: 1}}>
-          {/* <View> */}
           <ImageBackground
             source={require('../../assets/images/auth-bg.jpg')}
             style={styles.backgroundImage}
@@ -45,6 +44,7 @@ export default function SignUp() {
                     onFocus={() => setIsFocused('name')}
                     onChange={emailText => setEmail(emailText)}
                     value={email}
+                    style={styles.textWhite}
                   />
                 </View>
                 <View
@@ -57,6 +57,7 @@ export default function SignUp() {
                     onFocus={() => setIsFocused('email')}
                     onChange={emailText => setEmail(emailText)}
                     value={email}
+                    style={styles.textWhite}
                   />
                 </View>
                 <View>
@@ -71,6 +72,7 @@ export default function SignUp() {
                       onChange={passwordText => setPassword(passwordText)}
                       value={password}
                       secureTextEntry={secureText}
+                      style={styles.textWhite}
                     />
                     {secureText ? (
                       <Ionicons
@@ -94,6 +96,13 @@ export default function SignUp() {
                     Forgot password ?
                   </Text>
                 </View>
+                {/* <View>
+                  {loginMutation.isError && (
+                    <Text style={styles.errorText}>
+                      {loginMutation.error.message}
+                    </Text>
+                  )}
+                </View> */}
                 {Platform.OS === 'android' ? (
                   <View style={{borderRadius: 50, overflow: 'hidden'}}>
                     <TouchableNativeFeedback>
@@ -150,14 +159,14 @@ export default function SignUp() {
                       color: '#0077B5',
                       fontWeight: 'bold',
                       textDecorationLine: 'underline',
-                    }}>
+                    }}
+                    onPress={() => navigation.replace('Login')}>
                     Login!
                   </Text>
                 </Text>
               </View>
             </View>
           </ImageBackground>
-          {/* </View> */}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

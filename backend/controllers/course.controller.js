@@ -53,8 +53,10 @@ export const getCoursesOfInstructor = async (request, response) => {
 	try {
 		const userId = request.params.id;
 
-		const courses = await Course.findOne({ userId });
-		if (!courses) {
+		const courses = await Course.find({ userId }).sort({
+			createdAt: -1
+		});
+		if (courses.length === 0) {
 			response.status(404).json({
 				message: 'No courses found!',
 				success: false
@@ -67,7 +69,33 @@ export const getCoursesOfInstructor = async (request, response) => {
 			success: true
 		});
 	} catch (error) {
-		console.log('Error in getting the courses:\n', error);
+		console.error('Error in getting the courses:\n', error);
+		return response.status(500).json({
+			message: 'Internal server error.',
+			success: false
+		});
+	}
+};
+
+export const getPublishedCourses = async (request, response) => {
+	try {
+		const courses = await Course.find({
+			status: 'published'
+		}).sort({ createdAt: -1 });
+		if (courses.length === 0) {
+			response.status(404).json({
+				message: 'No courses found!',
+				success: false
+			});
+		}
+
+		return response.status(200).json({
+			message: 'Courses found',
+			data: courses,
+			success: true
+		});
+	} catch (error) {
+		console.error('Error in getting the courses:\n', error);
 		return response.status(500).json({
 			message: 'Internal server error.',
 			success: false
@@ -79,7 +107,7 @@ export const getAllCourses = (request, response) => {
 	try {
 		const allCourses = Course.find().sort({ createdAt: -1 });
 
-		if (!allCourses) {
+		if (allCourses.length === 0) {
 			response.status(404).json({
 				message: 'No courses found!',
 				success: false
@@ -210,6 +238,10 @@ export const deleteCourse = async (request, response) => {
 				success: false
 			});
 		}
+
+		await Lesson.deleteMany({ courseId });
+		await Assignment.deleteMany({ courseId });
+		await Progress.deleteMany({ courseId });
 
 		return response.status(200).json({
 			message: 'Your Course has been deleted!',

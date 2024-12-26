@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 export const authenticateToken = async (request, response, next) => {
 	try {
 		// extract token from frontend and validate it
-		const token = request.cookies.token;
+		const token = request.headers.authorization?.split(' ')[1];
 
 		if (!token) {
 			return response.status(401).json({

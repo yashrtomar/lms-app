@@ -10,10 +10,13 @@ const courseSchema = new Schema(
 		courseCategory: { type: String, required: true },
 		courseTitle: { type: String, required: true },
 		courseDescription: { type: String, required: true },
-		thumbnail: { type: String, default: '' },
+		thumbnail: {
+			type: String,
+			default: 'https://dummyimage.com/1280x16:9'
+		},
 		lessons: [{ type: Schema.Types.ObjectId, ref: 'Lesson' }],
-		studentEnrolled: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-		assignment: { type: Schema.Types.ObjectId, ref: 'User' },
+		studentsEnrolled: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+		assignment: { type: Schema.Types.ObjectId, ref: 'Assignment' },
 		coursePrice: { type: Number },
 		status: {
 			type: String,

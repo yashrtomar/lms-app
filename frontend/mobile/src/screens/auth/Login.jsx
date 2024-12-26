@@ -5,6 +5,7 @@ import {
   Platform,
   SafeAreaView,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -14,141 +15,198 @@ import {
 } from 'react-native';
 import React, {useState} from 'react';
 import Ionicons from '@react-native-vector-icons/ionicons';
+import {useLoginMutation} from '../../redux/features/auth/authApi';
+import {useDispatch} from 'react-redux';
+import {login} from '../../redux/features/auth/authSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function Login() {
+export default function Login({navigation}) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isFocused, setIsFocused] = useState('');
   const [secureText, setSecureText] = useState(true);
 
+  const [userLogin, {isLoading, isError, error, isSuccess}] =
+    useLoginMutation();
+
+  const dispatch = useDispatch();
+
+  const handleLogin = async () => {
+    try {
+      const response = await userLogin({email, password}).unwrap();
+
+      console.log(response);
+
+      const user = {
+        name: response.data.name,
+        email: response.data.email,
+        role: response.data.role,
+        profilePicture: response.data.profilePicture,
+        coursesEnrolledIn: response.data.coursesEnrolledIn,
+        coursesCreated: response.data.coursesCreated,
+        savedCourses: response.data.savedCourses,
+      };
+
+      await AsyncStorage.setItem('token', response.token);
+      await AsyncStorage.setItem('user', JSON.stringify(user));
+
+      if (response.user && response.token) {
+        dispatch(login({user: response.user, token: response.token}));
+      }
+      // navigation.replace('MainApp', {screen: 'Home'});
+    } catch (err) {
+      console.error('Login failed:', err);
+    }
+  };
+
   return (
-    <SafeAreaView style={{flex: 1}}>
-      <KeyboardAvoidingView
-        style={{flex: 1}}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <ScrollView contentContainerStyle={{flexGrow: 1}}>
-          {/* <View> */}
-          <ImageBackground
-            source={require('../../assets/images/auth-bg.jpg')}
-            style={styles.backgroundImage}
-            resizeMode="cover">
-            <View style={styles.container}>
-              <View style={styles.loginFormContainer}>
-                <Text style={styles.headerText}>Login</Text>
-                <View
-                  style={[
-                    styles.textInput,
-                    isFocused === 'email' && styles.focusBorder,
-                  ]}>
-                  <TextInput
-                    placeholder="email"
-                    onFocus={() => setIsFocused('email')}
-                    onChange={emailText => setEmail(emailText)}
-                    value={email}
-                  />
-                </View>
-                <View>
+    <>
+      <StatusBar
+        backgroundColor="transparent"
+        translucent={true} // for Android
+      />
+      <SafeAreaView style={{flex: 1, height: '100%'}}>
+        <View style={{flex: 1}}>
+          <ScrollView contentContainerStyle={{flexGrow: 1}}>
+            <ImageBackground
+              source={require('../../assets/images/auth-bg.jpg')}
+              style={[styles.backgroundImage, {flex: 1}]}
+              resizeMode="cover">
+              <View style={styles.container}>
+                <View style={styles.loginFormContainer}>
+                  <Text style={styles.headerText}>Login</Text>
                   <View
                     style={[
                       styles.textInput,
-                      isFocused === 'password' && styles.focusBorder,
+                      isFocused === 'email' && styles.focusBorder,
                     ]}>
                     <TextInput
-                      placeholder="password"
-                      onFocus={() => setIsFocused('password')}
-                      onChange={passwordText => setPassword(passwordText)}
-                      value={password}
-                      secureTextEntry={secureText}
+                      placeholder="email"
+                      onFocus={() => setIsFocused('email')}
+                      onChangeText={setEmail}
+                      value={email}
+                      style={styles.textWhite}
                     />
-                    {secureText ? (
-                      <Ionicons
-                        name="eye-outline"
-                        size={20}
-                        color="white"
-                        style={styles.toggleSecureTextIcon}
-                        onPress={() => setSecureText(!secureText)}
+                  </View>
+                  <View>
+                    <View
+                      style={[
+                        styles.textInput,
+                        isFocused === 'password' && styles.focusBorder,
+                      ]}>
+                      <TextInput
+                        placeholder="password"
+                        onFocus={() => setIsFocused('password')}
+                        onChangeText={setPassword}
+                        value={password}
+                        secureTextEntry={secureText}
+                        style={styles.textWhite}
                       />
-                    ) : (
-                      <Ionicons
-                        name="eye-off-outline"
-                        size={20}
-                        color="white"
-                        style={styles.toggleSecureTextIcon}
-                        onPress={() => setSecureText(!secureText)}
-                      />
+                      {secureText ? (
+                        <Ionicons
+                          name="eye-outline"
+                          size={20}
+                          color="white"
+                          style={styles.toggleSecureTextIcon}
+                          onPress={() => setSecureText(!secureText)}
+                        />
+                      ) : (
+                        <Ionicons
+                          name="eye-off-outline"
+                          size={20}
+                          color="white"
+                          style={styles.toggleSecureTextIcon}
+                          onPress={() => setSecureText(!secureText)}
+                        />
+                      )}
+                    </View>
+                    <Text style={[styles.textWhite, styles.forgotPasswordText]}>
+                      Forgot password ?
+                    </Text>
+                  </View>
+                  <View>
+                    {isError && (
+                      <Text style={styles.errorText}>
+                        {error?.data?.message}
+                      </Text>
                     )}
                   </View>
-                  <Text style={[styles.textWhite, styles.forgotPasswordText]}>
-                    Forgot password ?
-                  </Text>
-                </View>
-                {Platform.OS === 'android' ? (
-                  <View style={{borderRadius: 50, overflow: 'hidden'}}>
-                    <TouchableNativeFeedback>
-                      <View style={styles.loginButton}>
-                        <Text style={styles.textWhite}>Login</Text>
+                  {Platform.OS === 'android' ? (
+                    <View style={{borderRadius: 50, overflow: 'hidden'}}>
+                      <TouchableNativeFeedback
+                        onPress={handleLogin}
+                        disabled={isLoading}>
+                        <View style={styles.loginButton}>
+                          <Text style={styles.textWhite}>
+                            {isLoading ? 'Logging in...' : 'Login'}
+                          </Text>
+                        </View>
+                      </TouchableNativeFeedback>
+                    </View>
+                  ) : (
+                    <TouchableHighlight
+                      onPress={handleLogin}
+                      disabled={isLoading}>
+                      <View>
+                        <Text style={styles.textWhite}>
+                          {isLoading ? 'Logging in...' : 'Login'}
+                        </Text>
                       </View>
-                    </TouchableNativeFeedback>
-                  </View>
-                ) : (
-                  <TouchableHighlight>
-                    <View>
-                      <Text style={styles.textWhite}>Login</Text>
-                    </View>
-                  </TouchableHighlight>
-                )}
-                <View>
-                  <Text
-                    style={[
-                      styles.textWhite,
-                      {textAlign: 'center', marginBottom: 4},
-                    ]}>
-                    or continue with
-                  </Text>
-                  <View style={styles.OAuthIconsContainer}>
-                    <View>
-                      <Image
-                        source={require('../../assets/icons/login-with/google.png')}
-                        resizeMode="contain"
-                        style={{width: 36}}
-                      />
-                    </View>
-                    <View>
-                      <Image
-                        source={require('../../assets/icons/login-with/facebook.png')}
-                        resizeMode="contain"
-                        style={{width: 36}}
-                      />
-                    </View>
-                    <View>
-                      <Image
-                        source={require('../../assets/icons/login-with/apple.png')}
-                        resizeMode="contain"
-                        style={{width: 36}}
-                      />
+                    </TouchableHighlight>
+                  )}
+                  <View>
+                    <Text
+                      style={[
+                        styles.textWhite,
+                        {textAlign: 'center', marginBottom: 4},
+                      ]}>
+                      or continue with
+                    </Text>
+                    <View style={styles.OAuthIconsContainer}>
+                      <View>
+                        <Image
+                          source={require('../../assets/icons/login-with/google.png')}
+                          resizeMode="contain"
+                          style={{width: 36}}
+                        />
+                      </View>
+                      <View>
+                        <Image
+                          source={require('../../assets/icons/login-with/facebook.png')}
+                          resizeMode="contain"
+                          style={{width: 36}}
+                        />
+                      </View>
+                      <View>
+                        <Image
+                          source={require('../../assets/icons/login-with/apple.png')}
+                          resizeMode="contain"
+                          style={{width: 36}}
+                        />
+                      </View>
                     </View>
                   </View>
                 </View>
-              </View>
-              <View style={{marginBottom: 36}}>
-                <Text style={[styles.textWhite, {textAlign: 'center'}]}>
-                  Don't have an account ?{' '}
-                  <Text
-                    style={{
-                      color: '#0077B5',
-                      fontWeight: 'bold',
-                      textDecorationLine: 'underline',
-                    }}>
-                    Sign Up!
+                <View style={{marginBottom: 36}}>
+                  <Text style={[styles.textWhite, {textAlign: 'center'}]}>
+                    Don't have an account ?{' '}
+                    <Text
+                      style={{
+                        color: '#0077B5',
+                        fontWeight: 'bold',
+                        textDecorationLine: 'underline',
+                      }}
+                      onPress={() => navigation.replace('SignUp')}>
+                      Sign Up!
+                    </Text>
                   </Text>
-                </Text>
+                </View>
               </View>
-            </View>
-          </ImageBackground>
-          {/* </View> */}
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+            </ImageBackground>
+          </ScrollView>
+        </View>
+      </SafeAreaView>
+    </>
   );
 }
 
@@ -160,6 +218,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    paddingBottom: 0,
   },
   loginFormContainer: {
     flex: 1,
@@ -206,5 +265,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 40,
+  },
+  errorText: {
+    color: 'red',
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });

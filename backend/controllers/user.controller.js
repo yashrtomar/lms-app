@@ -47,12 +47,13 @@ export const signUp = async (request, response) => {
 
 		// generate token and send to the browser
 		const token = createSecretToken(user._id);
-		response.cookie('token', token, { httpOnly: false });
+		// response.cookie('token', token, { httpOnly: false });
 
 		// return success message along with data and a boolean value to work with
 		return response.status(200).json({
 			message: 'User created successfully!',
 			data: user,
+			token,
 			success: true
 		});
 	} catch (error) {
@@ -110,14 +111,17 @@ export const login = async (request, response) => {
 
 		// generate token and send it with success message, data and a boolean value to work with in response
 		const token = createSecretToken(user._id);
-		return response
-			.cookie('token', token, { httpOnly: false })
-			.status(200)
-			.json({
-				message: `Welcome back ${user?.name}`,
-				data: loggedInUser,
-				success: true
-			});
+		return (
+			response
+				// .cookie('token', token, { httpOnly: false })
+				.status(200)
+				.json({
+					message: `Welcome back ${user?.name}`,
+					data: loggedInUser,
+					token,
+					success: true
+				})
+		);
 	} catch (error) {
 		// handle error
 		console.error('Error in logging in:\n', error);

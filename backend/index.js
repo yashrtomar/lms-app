@@ -2,7 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import { connectDb } from './utils/db.js';
-// import cors from 'cors'; //for web
+import cors from 'cors';
 import userRoutes from './routes/user.routes.js';
 import courseRoutes from './routes/course.routes.js';
 import lessonRoutes from './routes/lesson.routes.js';
@@ -17,7 +17,7 @@ const PORT = process.env.PORT;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-// app.use(cors({ origin: 'http://localhost:5173', credentials: true })); //for web
+app.use(cors({ origin: 'http://localhost:8081', credentials: true }));
 
 //Routes
 app.use('/api/user', userRoutes);
