@@ -1,7 +1,5 @@
 import {
-  Image,
   ImageBackground,
-  KeyboardAvoidingView,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -13,49 +11,58 @@ import {
   TouchableNativeFeedback,
   View,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
 import Ionicons from '@react-native-vector-icons/ionicons';
-import {useLoginMutation} from '../../redux/features/auth/authApi';
+import validator from 'validator';
 import {useDispatch} from 'react-redux';
+import {useUserLoginMutation} from '../../redux/features/auth/authApi';
 import {login} from '../../redux/features/auth/authSlice';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Login({navigation}) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isFocused, setIsFocused] = useState('');
   const [secureText, setSecureText] = useState(true);
-
-  const [userLogin, {isLoading, isError, error, isSuccess}] =
-    useLoginMutation();
+  const [loginFormError, setLoginFormError] = useState('');
 
   const dispatch = useDispatch();
 
+  const [userLogin, {isLoading, error}] = useUserLoginMutation();
+
+  const passwordInputRef = useRef(null);
+
   const handleLogin = async () => {
+    setLoginFormError('');
+
+    if (email.trim() === '' || password === '') {
+      email.trim() === ''
+        ? setLoginFormError('Email is required!')
+        : setLoginFormError('Password is required!');
+      return;
+    } else if (!validator.isEmail(email)) {
+      setLoginFormError('Please Enter a valid email address!');
+      return;
+    } else {
+      setLoginFormError('');
+    }
     try {
-      const response = await userLogin({email, password}).unwrap();
+      const response = await userLogin({email, password});
 
       console.log(response);
-
-      const user = {
-        name: response.data.name,
-        email: response.data.email,
-        role: response.data.role,
-        profilePicture: response.data.profilePicture,
-        coursesEnrolledIn: response.data.coursesEnrolledIn,
-        coursesCreated: response.data.coursesCreated,
-        savedCourses: response.data.savedCourses,
-      };
-
-      await AsyncStorage.setItem('token', response.token);
-      await AsyncStorage.setItem('user', JSON.stringify(user));
-
-      if (response.user && response.token) {
-        dispatch(login({user: response.user, token: response.token}));
+      const responseData = response?.data;
+      if (responseData?.success && responseData?.token && responseData?.data) {
+        // Dispatch login action with token and user data
+        const user = responseData.data;
+        dispatch(login({token: responseData.token, user}));
+      } else {
+        // Handle case where response is invalid or missing required fields
+        setLoginFormError('Invalid login response!');
       }
-      // navigation.replace('MainApp', {screen: 'Home'});
     } catch (err) {
       console.error('Login failed:', err);
+      // Handle error more gracefully
+      const errorMessage = error || 'An error occurred during login';
+      setLoginFormError(errorMessage);
     }
   };
 
@@ -85,6 +92,9 @@ export default function Login({navigation}) {
                       onFocus={() => setIsFocused('email')}
                       onChangeText={setEmail}
                       value={email}
+                      returnKeyType="next"
+                      keyboardType="email-address"
+                      onSubmitEditing={() => passwordInputRef.current.focus()}
                       style={styles.textWhite}
                     />
                   </View>
@@ -100,6 +110,8 @@ export default function Login({navigation}) {
                         onChangeText={setPassword}
                         value={password}
                         secureTextEntry={secureText}
+                        returnKeyType="go"
+                        ref={passwordInputRef}
                         style={styles.textWhite}
                       />
                       {secureText ? (
@@ -125,10 +137,8 @@ export default function Login({navigation}) {
                     </Text>
                   </View>
                   <View>
-                    {isError && (
-                      <Text style={styles.errorText}>
-                        {error?.data?.message}
-                      </Text>
+                    {loginFormError && (
+                      <Text style={styles.errorText}>{loginFormError}</Text>
                     )}
                   </View>
                   {Platform.OS === 'android' ? (
@@ -154,7 +164,7 @@ export default function Login({navigation}) {
                       </View>
                     </TouchableHighlight>
                   )}
-                  <View>
+                  {/* <View>
                     <Text
                       style={[
                         styles.textWhite,
@@ -185,7 +195,7 @@ export default function Login({navigation}) {
                         />
                       </View>
                     </View>
-                  </View>
+                  </View> */}
                 </View>
                 <View style={{marginBottom: 36}}>
                   <Text style={[styles.textWhite, {textAlign: 'center'}]}>
@@ -196,7 +206,7 @@ export default function Login({navigation}) {
                         fontWeight: 'bold',
                         textDecorationLine: 'underline',
                       }}
-                      onPress={() => navigation.replace('SignUp')}>
+                      onPress={() => navigation.replace('sign-up')}>
                       Sign Up!
                     </Text>
                   </Text>

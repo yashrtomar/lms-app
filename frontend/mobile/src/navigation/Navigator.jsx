@@ -1,23 +1,60 @@
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  StatusBar,
+  ImageBackground,
+} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {NavigationContainer} from '@react-navigation/native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Homescreen from '../screens/Homescreen';
 import Search from '../screens/search/Search';
 import Notifications from '../screens/notifications/Notifications';
 import Profile from '../screens/user/Profile';
 import Login from '../screens/auth/Login';
 import SignUp from '../screens/auth/SignUp';
-import {useEffect, useState} from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {StyleSheet, Text} from 'react-native';
-import {useDispatch} from 'react-redux';
-import Ionicons from '@react-native-vector-icons/ionicons';
-import {setTokenAndUser} from '../redux/features/auth/authSlice';
+import {getFromAsyncStorage} from '../utils/AsyncStorage';
+import {useDispatch, useSelector} from 'react-redux';
+import {login} from '../redux/features/auth/authSlice';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import Icon from '@react-native-vector-icons/ionicons';
 
 const Stack = createNativeStackNavigator();
-const Tab = createBottomTabNavigator();
+const BottomTab = createBottomTabNavigator();
 
-function MainAppBottomTabNavigator() {
+function splashScreen() {
+  return (
+    <>
+      <StatusBar
+        backgroundColor="transparent"
+        translucent={true} // for Android
+      />
+      <SafeAreaView style={{flex: 1, height: '100%'}}>
+        <View style={{flex: 1}}>
+          <ImageBackground
+            source={require('../assets/images/auth-bg.jpg')}
+            style={[styles.backgroundImage, {flex: 1}]}
+            resizeMode="cover">
+            <View
+              style={{
+                flex: 1,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+              <ActivityIndicator color={'white'} size={'large'} />
+            </View>
+          </ImageBackground>
+        </View>
+      </SafeAreaView>
+    </>
+  );
+}
+
+function MainAppNavigation() {
   const tabBarItems = [
     {
       id: 0,
@@ -54,7 +91,7 @@ function MainAppBottomTabNavigator() {
   ];
 
   return (
-    <Tab.Navigator
+    <BottomTab.Navigator
       initialRouteName="Home"
       screenOptions={{
         headerShown: false,
@@ -65,7 +102,7 @@ function MainAppBottomTabNavigator() {
       }}>
       {tabBarItems.map(item => {
         return (
-          <Tab.Screen
+          <BottomTab.Screen
             key={item.id}
             name={item.name}
             component={item.component}
@@ -73,7 +110,7 @@ function MainAppBottomTabNavigator() {
               title: item.title,
               tabBarShowLabel: false,
               tabBarIcon: ({focused}) => (
-                <Ionicons
+                <Icon
                   name={focused ? item.iconNameFocused : item.iconName}
                   color={focused ? '#0077b5' : ''}
                   size={20}
@@ -83,75 +120,64 @@ function MainAppBottomTabNavigator() {
           />
         );
       })}
-    </Tab.Navigator>
+    </BottomTab.Navigator>
   );
 }
 
-function AuthStackNavigator() {
+function AuthStack() {
   return (
     <Stack.Navigator screenOptions={{headerShown: false, animation: 'fade'}}>
-      <Stack.Screen
-        name="Login"
-        component={Login}
-        options={{title: 'Lms Login'}}
-      />
-      <Stack.Screen
-        name="SignUp"
-        component={SignUp}
-        options={{title: 'Lms Sign Up'}}
-      />
+      <Stack.Screen name="login" component={Login} />
+      <Stack.Screen name="sign-up" component={SignUp} />
     </Stack.Navigator>
   );
 }
 
-export default function Navigator() {
-  const [token, setToken] = useState(null);
-  const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // Track loading state
+const Navigator = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
 
   const dispatch = useDispatch();
 
+  const token = useSelector(state => state.authReducer.token);
+  const user = useSelector(state => state.authReducer.user);
+
   useEffect(() => {
-    const fetchToken = async () => {
+    const loadAuthData = async () => {
       try {
-        const storedToken = await AsyncStorage.getItem('token');
-        const storedUser = await AsyncStorage.getItem('user');
+        const storedToken = await getFromAsyncStorage('token');
+        const storedUser = await getFromAsyncStorage('user');
 
         if (storedToken && storedUser) {
-          setToken(storedToken); // Set the token in state
-          setUser(JSON.parse(storedUser)); // Set the user in state
+          setIsAuthenticated(true);
+          dispatch(login({token: storedToken, user: storedUser}));
+        } else {
+          setIsAuthenticated(false);
         }
-
-        dispatch(setTokenAndUser({token, user})); // Dispatch after token and user are set
       } catch (error) {
-        console.error('Error fetching token:', error);
-      } finally {
-        setIsLoading(false); // Set loading to false after fetching
+        console.error('Error loading auth data from AsyncStorage:', error);
+        setIsAuthenticated(false);
       }
     };
 
-    fetchToken();
-  }, []);
+    loadAuthData();
+  }, [token, user]);
 
-  // Show a loading screen while fetching the token
-  if (isLoading) {
-    return <Text>Loading...</Text>; // You can customize this loading screen
+  if (isAuthenticated === null) {
+    return splashScreen();
   }
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{headerShown: false, animation: 'fade'}}>
-        {token ? (
-          <Stack.Screen name="MainApp" component={MainAppBottomTabNavigator} />
-        ) : (
-          <Stack.Screen name="Auth" component={AuthStackNavigator} />
-        )}
-      </Stack.Navigator>
+      {isAuthenticated ? <MainAppNavigation /> : <AuthStack />}
     </NavigationContainer>
   );
-}
+};
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
+  },
   tabBarStyle: {
     height: 62,
     paddingTop: 12,
@@ -159,3 +185,5 @@ const styles = StyleSheet.create({
     paddingBottom: 0,
   },
 });
+
+export default Navigator;

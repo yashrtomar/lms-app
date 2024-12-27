@@ -7,7 +7,7 @@ import {
   View,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
-import {useGetCoursesQuery} from '../redux/features/courses/coursesApi';
+import {useGetPublishedCoursesQuery} from '../redux/features/courses/coursesApi';
 import {useDispatch} from 'react-redux';
 import {setTokenAndUser} from '../redux/features/auth/authSlice';
 import Header from '../components/ui/Header';
@@ -15,29 +15,10 @@ import PillShapedOutlined from '../components/buttons/PillShapedOutlined';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Homescreen() {
-  const [token, setToken] = useState(null);
-  const [user, setUser] = useState(null);
+  const {data, isLoading, error} = useGetPublishedCoursesQuery();
 
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      const storedToken = await AsyncStorage.getItem('token');
-      const storedUser = await AsyncStorage.getItem('user');
-      if (storedToken && storedUser) {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
-
-        // Token exists, set it in Redux
-        dispatch(setTokenAndUser({token, user}));
-      }
-    };
-
-    checkAuthStatus();
-  }, [dispatch]);
-
-  const {data: response, isLoading, error} = useGetCoursesQuery();
-  const courses = response?.data;
+  const courses = data?.data;
+  console.log(courses);
 
   if (isLoading) {
     return (
@@ -67,13 +48,16 @@ export default function Homescreen() {
             Yashvardhan !
           </Text>
         </View>
-        {token ? (
+        {/* {token ? (
           <View style={styles.container}>
             <Header text={'Continue Learning'} />
           </View>
         ) : (
           ''
-        )}
+        )} */}
+        <View style={styles.container}>
+          <Header text={'Continue Learning'} />
+        </View>
         <View style={[styles.container, styles.flex]}>
           <Header text="Explore Categories" />
           <ScrollView horizontal style={{gap: 8}}>

@@ -1,18 +1,16 @@
 import {createSlice} from '@reduxjs/toolkit';
 
-const initialState = {
-  courses: [],
-};
-
 const coursesSlice = createSlice({
   name: 'coursesSlice',
-  initialState,
+  initialState: {
+    publishedCourses: [],
+  },
   reducers: {
-    setCourses: (state, action) => {
-      state.courses = action.payload;
+    getPublishedCourses: (state, action) => {
+      state.publishedCourses = action.payload;
     },
   },
 });
 
-export const {setCourses} = coursesSlice.actions;
-export default coursesSlice.reducer;
+export const {getPublishedCourses} = coursesSlice.reducer;
+export default coursesSlice;

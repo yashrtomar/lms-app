@@ -1,27 +1,22 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {createApi, fetchBaseQuery} from '@reduxjs/toolkit/query/react';
+import {getFromAsyncStorage} from '../../../utils/AsyncStorage';
 
-export const coursesApi = createApi({
+const coursesApi = createApi({
   reducerPath: 'coursesApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'http://192.168.1.100:8000/api/course',
-    prepareHeaders: async headers => {
-      try {
-        // Get the token from AsyncStorage
-        const token = await AsyncStorage.getItem('token');
-        // If the token exists, add it to the Authorization header
-        if (token) {
-          headers.set('Authorization', `Bearer ${token}`);
-        }
-      } catch (error) {
-        console.error('Error getting token from AsyncStorage:', error);
+    baseUrl: 'http://192.168.0.101:8000/api/course',
+    prepareHeaders: async (headers, {endpoint}) => {
+      const token = await getFromAsyncStorage('token');
+
+      if (token) {
+        headers.set('Authorization', `Bearer ${token}`);
       }
 
       return headers;
     },
   }),
   endpoints: builder => ({
-    getCourses: builder.query({
+    getPublishedCourses: builder.query({
       query: () => ({
         url: 'published-courses',
         method: 'get',
@@ -30,4 +25,5 @@ export const coursesApi = createApi({
   }),
 });
 
-export const {useGetCoursesQuery} = coursesApi;
+export const {useGetPublishedCoursesQuery} = coursesApi;
+export default coursesApi;

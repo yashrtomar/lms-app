@@ -1,18 +1,20 @@
 import {createApi, fetchBaseQuery} from '@reduxjs/toolkit/query/react';
 
-export const authApi = createApi({
+const authApi = createApi({
   reducerPath: 'authApi',
-  baseQuery: fetchBaseQuery({baseUrl: 'http://192.168.1.100:8000/api/user'}),
-  endpoints: build => ({
-    signUp: build.mutation({
-      query: ({name, email, password, role}) => ({
+  baseQuery: fetchBaseQuery({
+    baseUrl: 'http://192.168.0.101:8000/api/user',
+  }),
+  endpoints: builder => ({
+    userSignUp: builder.mutation({
+      query: ({name, email, password}) => ({
         url: 'sign-up',
         method: 'post',
-        body: {name, email, password, role},
+        body: {name, email, password},
         headers: {'Content-Type': 'application/json'},
       }),
     }),
-    login: build.mutation({
+    userLogin: builder.mutation({
       query: ({email, password}) => ({
         url: 'login',
         method: 'post',
@@ -20,7 +22,15 @@ export const authApi = createApi({
         headers: {'Content-Type': 'application/json'},
       }),
     }),
+    userLogout: builder.query({
+      query: () => ({
+        url: 'logout',
+        method: 'get',
+      }),
+    }),
   }),
 });
 
-export const {useLoginMutation} = authApi;
+export const {useSignUpMutation, useUserLoginMutation, useLogoutQuery} =
+  authApi;
+export default authApi;

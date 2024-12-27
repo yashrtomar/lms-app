@@ -1,31 +1,37 @@
 import {createSlice} from '@reduxjs/toolkit';
+import {
+  removeFromAsyncStorage,
+  saveToAsyncStorage,
+} from '../../../utils/AsyncStorage';
 
-const initialState = {
-  user: null,
-  token: null,
-};
 const authSlice = createSlice({
   name: 'authSlice',
-  initialState,
+  initialState: {
+    token: null,
+    user: null,
+    isAuthenticated: false,
+  },
   reducers: {
     signUp: (state, action) => {
-      state.user = action.payload.user;
       state.token = action.payload.token;
+      state.user = action.payload.user;
+      saveToAsyncStorage('token', state.token);
+      saveToAsyncStorage('user', state.user);
     },
     login: (state, action) => {
-      state.user = action.payload.user;
       state.token = action.payload.token;
+      state.user = action.payload.user;
+      saveToAsyncStorage('token', state.token);
+      saveToAsyncStorage('user', state.user);
     },
     logout: state => {
-      state.user = null;
       state.token = null;
-    },
-    setTokenAndUser: (state, action) => {
-      state.token = action.payload.token;
-      state.user = action.payload.user;
+      state.user = null;
+      removeFromAsyncStorage('token');
+      removeFromAsyncStorage('user');
     },
   },
 });
 
-export const {login, logout, signUp, setTokenAndUser} = authSlice.actions;
+export const {signUp, login, logout} = authSlice.actions;
 export default authSlice.reducer;

@@ -6,17 +6,15 @@ import {logout} from '../../redux/features/auth/authSlice';
 
 export default function Profile({navigation}) {
   const dispatch = useDispatch();
+
   const handleLogout = async () => {
     try {
-      await AsyncStorage.removeItem('token');
-      await AsyncStorage.removeItem('user');
+      // Clear AsyncStorage
+      await AsyncStorage.multiRemove(['token', 'user']);
+      // Dispatch logout action to clear Redux state
       dispatch(logout());
-      // navigation.reset({
-      //   index: 0,
-      //   routes: [{name: 'Auth.Login'}],
-      // });
     } catch (error) {
-      console.error('Error logging out:', error);
+      console.error('Error during logout:', error);
     }
   };
   return (
