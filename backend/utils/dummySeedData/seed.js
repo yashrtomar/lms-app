@@ -12,18 +12,18 @@ import { assignments } from './assignmentsData.js';
 
 export const connectDb = async () => {
 	// initialize to a variable and validate the mongodb connection URI
-	// const mongoUri = process.env.MONGO_URI || '';
-	// if (!mongoUri) {
-	// 	throw new Error(
-	// 		'MongoDb connection URI is not defined in the environment variables'
-	// 	);
-	// }
+	const mongoUri = process.env.MONGO_URI || '';
+	if (!mongoUri) {
+		throw new Error(
+			'MongoDb connection URI is not defined in the environment variables'
+		);
+	}
 	try {
 		// connect to mongodb using connect()
-		// await mongoose.connect(process.env.MONGO_URI);
-		await mongoose.connect(
-			'mongodb+srv://yash:12345@cluster0.xkcye.mongodb.net/lms-app?retryWrites=true&w=majority&appName=Cluster0'
-		);
+		await mongoose.connect(mongoUri);
+		// await mongoose.connect(
+		// 	'mongodb+srv://yash:12345@cluster0.xkcye.mongodb.net/lms-app?retryWrites=true&w=majority&appName=Cluster0'
+		// );
 		console.log('MongoDb connected successfully !');
 	} catch (error) {
 		// handle error
