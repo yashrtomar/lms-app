@@ -22,7 +22,7 @@ export const connectDb = async () => {
 		// connect to mongodb using connect()
 		await mongoose.connect(mongoUri);
 		// await mongoose.connect(
-		// 	'mongodb+srv://yash:12345@cluster0.xkcye.mongodb.net/lms-app?retryWrites=true&w=majority&appName=Cluster0'
+		// 	'mongodb+srv:...'
 		// );
 		console.log('MongoDb connected successfully !');
 	} catch (error) {
